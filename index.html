@@ -97,6 +97,22 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:14px 1
 .goal-input:focus{border-color:var(--accent);color:var(--text);}
 .del-btn{background:transparent;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;padding:4px;transition:color 0.15s;flex-shrink:0;}
 .del-btn:active{color:var(--danger);}
+.drag-handle{color:var(--text3);font-size:1.1rem;cursor:grab;padding:4px;flex-shrink:0;touch-action:none;}
+.drag-handle:active{cursor:grabbing;}
+.edit-row.dragging{opacity:0.4;background:var(--surface2);}
+.edit-row.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px var(--aglow);}
+/* tile reorder hint */
+.tile.reorder-mode{cursor:grab;}
+.tile.reorder-mode:active{cursor:grabbing;transform:scale(0.95);box-shadow:0 8px 30px rgba(0,0,0,0.5);}
+.tile.drag-placeholder{opacity:0.3;border:2px dashed var(--accent);}
+.reorder-banner{
+  background:var(--surface2);border:1px solid var(--accent);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:12px;
+  display:none;align-items:center;justify-content:space-between;gap:10px;
+}
+.reorder-banner.show{display:flex;}
+.reorder-banner-text{font-size:0.82rem;font-weight:600;color:var(--accent);}
+.reorder-done-btn{background:var(--accent);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;}
 .add-btn{width:100%;padding:13px;border-radius:var(--r);background:var(--accent);border:none;color:#fff;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;margin-bottom:8px;box-shadow:0 4px 20px var(--aglow);}
 .add-btn:active{filter:brightness(0.8);}
 .save-btn{width:100%;padding:13px;border-radius:var(--r);background:var(--green);border:none;color:#0a0a0f;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;}
@@ -165,6 +181,10 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:14px 1
 </nav>
 
 <div class="view active" id="v-counters">
+  <div class="reorder-banner" id="reorder-banner">
+    <div class="reorder-banner-text">✋ Hold &amp; drag tiles to reorder</div>
+    <button class="reorder-done-btn" onclick="exitReorder()">Done ✓</button>
+  </div>
   <div class="grid" id="grid"></div>
 </div>
 
@@ -187,7 +207,10 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:14px 1
 </div>
 
 <div class="view" id="v-edit">
-  <div class="sec-title" style="margin-top:0;">Your Tiles <span style="color:var(--text3);font-size:0.7rem;">(set daily goal = 0 for no goal)</span></div>
+  <div class="sec-title" style="margin-top:0;display:flex;align-items:center;justify-content:space-between;">
+    <span>Your Tiles <span style="color:var(--text3);font-size:0.7rem;">(goal 0 = no goal)</span></span>
+    <button onclick="enterReorder()" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);padding:5px 12px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;">↕ Reorder</button>
+  </div>
   <div class="edit-list" id="edit-list"></div>
   <button class="add-btn" onclick="openAdd()">＋ Add New Tile</button>
   <button class="save-btn" onclick="saveEdit()">✓ Save Changes</button>
@@ -382,7 +405,9 @@ function renderEdit(){
   const el=document.getElementById('edit-list');el.innerHTML='';
   S.tiles.forEach(t=>{
     const row=document.createElement('div');row.className='edit-row';
+    row.dataset.id=t.id;
     row.innerHTML=`
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
       <div class="edit-dot" style="background:${t.color}"></div>
       <input class="edit-input" data-id="${t.id}" value="${esc(t.name)}" maxlength="20" placeholder="Tile name">
       <input class="goal-input" data-goal="${t.id}" value="${t.goal||''}" placeholder="Goal" type="number" min="0" max="9999">
@@ -390,10 +415,127 @@ function renderEdit(){
     `;
     el.appendChild(row);
   });
+  initEditDrag();
   const ns=S.settings||{};
   document.getElementById('notif-toggle').className='toggle'+(ns.notifEnabled?' on':'');
   document.getElementById('reset-toggle').className='toggle'+(ns.autoReset?' on':'');
   renderTimes();
+}
+
+/* DRAG-AND-DROP in Edit list */
+function initEditDrag(){
+  const list=document.getElementById('edit-list');
+  let dragging=null,dragOverEl=null;
+  list.querySelectorAll('.edit-row').forEach(row=>{
+    const handle=row.querySelector('.drag-handle');
+    // Mouse
+    handle.addEventListener('mousedown',e=>{startDrag(e,row);});
+    // Touch
+    handle.addEventListener('touchstart',e=>{startDrag(e,row);},{passive:true});
+  });
+  function startDrag(e,row){
+    dragging=row;row.classList.add('dragging');
+    document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+    document.addEventListener('touchmove',onTouchMove,{passive:false});document.addEventListener('touchend',onUp);
+  }
+  function onMove(e){findTarget(e.clientX,e.clientY);}
+  function onTouchMove(e){e.preventDefault();const t=e.touches[0];findTarget(t.clientX,t.clientY);}
+  function findTarget(x,y){
+    const rows=[...list.querySelectorAll('.edit-row:not(.dragging)')];
+    let target=null;
+    rows.forEach(r=>{r.classList.remove('drag-over');});
+    for(const r of rows){
+      const rect=r.getBoundingClientRect();
+      if(y>=rect.top&&y<=rect.bottom){target=r;break;}
+    }
+    if(target){target.classList.add('drag-over');dragOverEl=target;}
+    else dragOverEl=null;
+  }
+  function onUp(){
+    if(dragging&&dragOverEl&&dragging!==dragOverEl){
+      // Reorder S.tiles array
+      const fromId=parseInt(dragging.dataset.id);
+      const toId=parseInt(dragOverEl.dataset.id);
+      const fi=S.tiles.findIndex(t=>t.id===fromId);
+      const ti=S.tiles.findIndex(t=>t.id===toId);
+      if(fi>-1&&ti>-1){
+        const [moved]=S.tiles.splice(fi,1);
+        S.tiles.splice(ti,0,moved);
+        save();renderEdit();toast('Order saved ✓');
+      }
+    }
+    if(dragging)dragging.classList.remove('dragging');
+    list.querySelectorAll('.edit-row').forEach(r=>r.classList.remove('drag-over'));
+    dragging=null;dragOverEl=null;
+    document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);
+    document.removeEventListener('touchmove',onTouchMove);document.removeEventListener('touchend',onUp);
+  }
+}
+
+/* REORDER MODE on main tile grid (long press) */
+let reorderMode=false,dragTile=null,dragOverTile=null;
+function enterReorder(){
+  show('counters');
+  reorderMode=true;
+  document.getElementById('reorder-banner').classList.add('show');
+  renderTilesReorder();
+}
+function exitReorder(){
+  reorderMode=false;
+  document.getElementById('reorder-banner').classList.remove('show');
+  renderTiles();
+  toast('Order saved ✓');
+}
+function renderTilesReorder(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  S.tiles.forEach(t=>{
+    const div=document.createElement('div');
+    div.className='tile reorder-mode';div.style.setProperty('--tc',t.color);
+    div.dataset.id=t.id;
+    div.innerHTML=`
+      <div style="font-size:1.4rem;color:var(--text3);">⠿</div>
+      <div class="tile-name">${esc(t.name)}</div>
+      <div class="tile-count" style="font-size:2rem;">${t.count}</div>
+      <div class="tile-today" style="font-size:0.72rem;color:var(--text3);">Hold &amp; drag to move</div>
+    `;
+    // Touch drag
+    div.addEventListener('touchstart',e=>{startTileDrag(e,div);},{passive:true});
+    div.addEventListener('touchmove',e=>{moveTileDrag(e);},{passive:false});
+    div.addEventListener('touchend',()=>{endTileDrag();});
+    // Mouse drag
+    div.addEventListener('mousedown',e=>{startTileDrag(e,div);});
+    div.addEventListener('mousemove',e=>{if(dragTile)moveTileDrag(e);});
+    div.addEventListener('mouseup',()=>{endTileDrag();});
+    g.appendChild(div);
+  });
+}
+function startTileDrag(e,div){
+  dragTile=div;div.style.opacity='0.5';div.style.transform='scale(0.95)';
+}
+function moveTileDrag(e){
+  if(!dragTile)return;
+  e.preventDefault();
+  const pt=e.touches?e.touches[0]:e;
+  const els=[...document.querySelectorAll('.tile.reorder-mode')];
+  els.forEach(el=>el.classList.remove('drag-placeholder'));
+  for(const el of els){
+    if(el===dragTile)continue;
+    const r=el.getBoundingClientRect();
+    if(pt.clientX>=r.left&&pt.clientX<=r.right&&pt.clientY>=r.top&&pt.clientY<=r.bottom){
+      dragOverTile=el;el.classList.add('drag-placeholder');break;
+    }
+  }
+}
+function endTileDrag(){
+  if(dragTile&&dragOverTile){
+    const fi=S.tiles.findIndex(t=>t.id===parseInt(dragTile.dataset.id));
+    const ti=S.tiles.findIndex(t=>t.id===parseInt(dragOverTile.dataset.id));
+    if(fi>-1&&ti>-1){const[m]=S.tiles.splice(fi,1);S.tiles.splice(ti,0,m);save();}
+  }
+  if(dragTile){dragTile.style.opacity='';dragTile.style.transform='';}
+  document.querySelectorAll('.tile').forEach(el=>el.classList.remove('drag-placeholder'));
+  dragTile=null;dragOverTile=null;
+  if(reorderMode)renderTilesReorder();
 }
 
 function delTile(id){
