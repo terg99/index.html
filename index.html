@@ -3,581 +3,508 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0f0f14">
+<meta name="theme-color" content="#0a0a0f">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TallyUp">
 <title>TallyUp</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0f0f14;
-    --surface: #1a1a24;
-    --surface2: #22222f;
-    --border: #2e2e3f;
-    --accent: #7c6aff;
-    --accent2: #ff6a8a;
-    --accent3: #6affb4;
-    --text: #f0f0f8;
-    --text2: #8888aa;
-    --danger: #ff4466;
-    --radius: 16px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+:root {
+  --bg:#0a0a0f;--bg2:#111118;--surface:#16161f;--surface2:#1e1e2a;--surface3:#252535;
+  --border:#2a2a3d;--border2:#353550;
+  --accent:#5b5fff;--aglow:rgba(91,95,255,0.25);
+  --pink:#ff5b8d;--green:#3dffa0;--yellow:#ffd166;--cyan:#5bf5ff;
+  --text:#eeeef8;--text2:#7878a0;--text3:#4a4a6a;
+  --danger:#ff4466;--r:14px;--r2:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;height:100dvh;}
 
-  /* ── NAV ── */
-  nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
-    backdrop-filter: blur(10px);
-  }
-  .nav-logo { font-size: 1.4rem; font-weight: 800; letter-spacing: -1px; }
-  .nav-logo span { color: var(--accent); }
-  .nav-tabs { display: flex; gap: 4px; background: var(--surface); border-radius: 10px; padding: 4px; }
-  .nav-tab {
-    padding: 7px 16px; border-radius: 7px; border: none; background: transparent;
-    color: var(--text2); font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .nav-tab.active { background: var(--accent); color: #fff; }
-  .nav-edit-btn {
-    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
-    padding: 8px 14px; border-radius: 10px; font-family: 'Syne', sans-serif;
-    font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-  }
-  .nav-edit-btn:hover { background: var(--accent); border-color: var(--accent); }
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(10,10,15,0.95);border-bottom:1px solid var(--border);z-index:50;flex-shrink:0;backdrop-filter:blur(20px);}
+.logo{font-size:1.3rem;font-weight:800;letter-spacing:-0.5px;}
+.logo em{font-style:normal;color:var(--accent);}
+.nav-tabs{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;}
+.tab{padding:6px 13px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 12px var(--aglow);}
+.add-nav-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 13px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.18s;}
+.add-nav-btn:active{background:var(--accent);border-color:var(--accent);}
 
-  /* ── VIEWS ── */
-  .view { display: none; padding: 20px; }
-  .view.active { display: block; }
+.view{display:none;flex:1;overflow-y:auto;padding:16px;position:relative;}
+.view.active{display:block;}
 
-  /* ── COUNTER GRID ── */
-  .counter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
-  }
-  .tile {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 16px 16px;
-    display: flex; flex-direction: column; align-items: center;
-    gap: 12px; cursor: pointer; position: relative;
-    transition: transform 0.12s, box-shadow 0.12s;
-    user-select: none;
-    min-height: 160px;
-    overflow: hidden;
-  }
-  .tile::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: var(--tile-color, var(--accent));
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-  .tile:active { transform: scale(0.95); box-shadow: 0 0 20px -5px var(--tile-color, var(--accent)); }
-  .tile-name {
-    font-size: 0.85rem; font-weight: 600; color: var(--text2);
-    text-align: center; text-transform: uppercase; letter-spacing: 1px;
-    word-break: break-word;
-  }
-  .tile-count {
-    font-family: 'Space Mono', monospace;
-    font-size: 2.6rem; font-weight: 700;
-    color: var(--text); line-height: 1;
-  }
-  .tile-btn-row { display: flex; gap: 8px; align-items: center; }
-  .tile-minus, .tile-plus {
-    width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border);
-    background: var(--surface2); color: var(--text);
-    font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-  .tile-minus:active { background: var(--danger); border-color: var(--danger); }
-  .tile-plus {
-    width: 44px; height: 44px; font-size: 1.5rem;
-    background: var(--tile-color, var(--accent));
-    border-color: transparent; color: #fff;
-  }
-  .tile-plus:active { filter: brightness(0.8); }
-  .tile-today { font-size: 0.72rem; color: var(--text2); font-family: 'Space Mono', monospace; }
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 14px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;overflow:hidden;min-height:172px;transition:transform 0.1s;user-select:none;}
+.tile::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--tc,var(--accent));box-shadow:0 0 10px var(--tc,var(--accent));}
+.tile:active{transform:scale(0.96);}
+.tile-name{font-size:0.78rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.2px;text-align:center;word-break:break-word;line-height:1.3;}
+.tile-count{font-family:'DM Mono',monospace;font-size:2.8rem;font-weight:500;color:var(--text);line-height:1;transition:transform 0.1s;}
+.tile-count.bump{transform:scale(1.3);}
+.tile-row{display:flex;gap:8px;align-items:center;}
+.btn-minus,
+.btn-plus{border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border-radius:50%;transition:all 0.12s;}
+.btn-minus{width:34px;height:34px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);}
+.btn-minus:active{background:var(--danger);color:#fff;border-color:var(--danger);}
+.btn-plus{width:46px;height:46px;font-size:1.6rem;background:var(--tc,var(--accent));color:#fff;box-shadow:0 4px 16px color-mix(in srgb,var(--tc,var(--accent)) 40%,transparent);}
+.btn-plus:active{filter:brightness(0.75);}
+.tile-meta{display:flex;gap:8px;align-items:center;}
+.tile-today{font-size:0.7rem;color:var(--text3);font-family:'DM Mono',monospace;}
+.streak-badge{font-size:0.68rem;font-weight:700;background:rgba(255,209,102,0.15);color:var(--yellow);padding:2px 7px;border-radius:20px;display:none;}
+.streak-badge.show{display:inline-block;}
+.goal-wrap{width:100%;display:none;}
+.goal-wrap.show{display:block;}
+.goal-track{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;}
+.goal-fill{height:100%;border-radius:2px;transition:width 0.4s ease;background:var(--tc,var(--accent));}
+.goal-lbl{font-size:0.65rem;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;text-align:right;}
 
-  /* Ripple */
-  @keyframes ripple { to { transform: scale(4); opacity: 0; } }
-  .ripple { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.15); width: 60px; height: 60px; transform: scale(0); animation: ripple 0.4s linear; pointer-events: none; }
+.add-tile{background:transparent;border:1.5px dashed var(--border2);border-radius:var(--r2);min-height:172px;cursor:pointer;color:var(--text3);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;}
+.add-tile:active{border-color:var(--accent);color:var(--accent);}
 
-  /* ── ADD TILE BUTTON ── */
-  .add-tile-btn {
-    background: transparent; border: 2px dashed var(--border);
-    border-radius: var(--radius); padding: 20px 16px;
-    min-height: 160px; cursor: pointer;
-    color: var(--text2); font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 600;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
-    transition: all 0.2s;
-  }
-  .add-tile-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .add-tile-btn .plus-icon { font-size: 2rem; }
+/* DASHBOARD */
+.dash-date{font-size:0.82rem;color:var(--text2);margin-bottom:16px;font-weight:500;}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px 14px;}
+.kpi-label{font-size:0.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+.kpi-val{font-family:'DM Mono',monospace;font-size:2rem;font-weight:500;margin-top:6px;line-height:1;}
+.c1{color:var(--accent);}.c2{color:var(--pink);}.c3{color:var(--green);}.c4{color:var(--yellow);}
+.sec-title{font-size:0.72rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;margin-top:20px;}
+.bar-list{display:flex;flex-direction:column;gap:8px;}
+.bar-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;}
+.bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.bar-name{font-weight:700;font-size:0.88rem;}.bar-num{font-family:'DM Mono',monospace;font-size:0.82rem;color:var(--text2);}
+.bar-track{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
+.bar-streak{font-size:0.7rem;color:var(--yellow);margin-top:5px;}
+.today-list{display:flex;flex-direction:column;gap:8px;}
+.today-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 14px;display:flex;justify-content:space-between;align-items:center;}
+.today-name{font-weight:600;font-size:0.88rem;}
+.today-pill{font-family:'DM Mono',monospace;font-size:0.75rem;padding:3px 10px;border-radius:20px;background:var(--surface2);}
+.export-btn{width:100%;padding:13px;border-radius:var(--r);background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:8px;transition:all 0.18s;}
+.export-btn:active{background:var(--green);color:#0a0a0f;border-color:var(--green);}
+.reset-btn{width:100%;padding:13px;border-radius:var(--r);background:transparent;border:1px solid var(--danger);color:var(--danger);font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:8px;transition:all 0.18s;}
+.reset-btn:active{background:var(--danger);color:#fff;}
 
-  /* ── DASHBOARD ── */
-  .dash-header { margin-bottom: 20px; }
-  .dash-title { font-size: 1.5rem; font-weight: 800; }
-  .dash-sub { color: var(--text2); font-size: 0.85rem; margin-top: 4px; }
-  .stats-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px;
-  }
-  .stat-label { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
-  .stat-value { font-family: 'Space Mono', monospace; font-size: 1.8rem; font-weight: 700; margin-top: 6px; }
-  .stat-value.accent { color: var(--accent); }
-  .stat-value.accent2 { color: var(--accent2); }
+/* EDIT */
+.edit-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.edit-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.edit-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.edit-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:600;outline:none;min-width:0;}
+.edit-input:focus{border-bottom:1px solid var(--accent);}
+.goal-input{width:64px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-family:'DM Mono',monospace;font-size:0.8rem;padding:4px 8px;border-radius:8px;outline:none;text-align:center;}
+.goal-input:focus{border-color:var(--accent);color:var(--text);}
+.del-btn{background:transparent;border:none;color:var(--text3);font-size:1.1rem;cursor:pointer;padding:4px;transition:color 0.15s;flex-shrink:0;}
+.del-btn:active{color:var(--danger);}
+.add-btn{width:100%;padding:13px;border-radius:var(--r);background:var(--accent);border:none;color:#fff;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;margin-bottom:8px;box-shadow:0 4px 20px var(--aglow);}
+.add-btn:active{filter:brightness(0.8);}
+.save-btn{width:100%;padding:13px;border-radius:var(--r);background:var(--green);border:none;color:#0a0a0f;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.save-btn:active{filter:brightness(0.8);}
 
-  .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
-  .bar-list { display: flex; flex-direction: column; gap: 10px; }
-  .bar-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-  .bar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .bar-name { font-weight: 600; font-size: 0.9rem; }
-  .bar-count { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--text2); }
-  .bar-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+/* SETTINGS CARDS */
+.setting-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:10px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;}
+.setting-label{font-size:0.9rem;font-weight:700;}
+.setting-sub{font-size:0.75rem;color:var(--text2);margin-top:2px;}
+.toggle{width:44px;height:24px;background:var(--surface3);border:none;border-radius:12px;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--accent);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform 0.2s;}
+.toggle.on::after{transform:translateX(20px);}
+.time-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.time-row{display:flex;align-items:center;gap:8px;}
+.time-input{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-family:'DM Mono',monospace;font-size:0.85rem;outline:none;}
+.time-input:focus{border-color:var(--accent);}
+.remove-time{background:transparent;border:none;color:var(--text3);font-size:1rem;cursor:pointer;padding:4px;}
+.remove-time:active{color:var(--danger);}
+.add-time-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);padding:8px 14px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;margin-top:10px;}
+.add-time-btn:active{border-color:var(--accent);color:var(--accent);}
 
-  .today-section { margin-top: 24px; }
-  .today-list { display: flex; flex-direction: column; gap: 8px; }
-  .today-row {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 16px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .today-name { font-weight: 600; font-size: 0.9rem; }
-  .today-badge {
-    font-family: 'Space Mono', monospace; font-size: 0.8rem;
-    padding: 3px 10px; border-radius: 20px; background: var(--surface2);
-    color: var(--accent);
-  }
-  .reset-section { margin-top: 24px; text-align: center; }
-  .reset-btn {
-    background: transparent; border: 1px solid var(--danger);
-    color: var(--danger); padding: 10px 24px; border-radius: 10px;
-    font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 600;
-    cursor: pointer; transition: all 0.2s;
-  }
-  .reset-btn:hover { background: var(--danger); color: #fff; }
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);z-index:200;align-items:flex-end;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;padding:26px 22px 44px;width:100%;max-width:480px;border:1px solid var(--border2);border-bottom:none;animation:slideUp 0.22s ease;}
+@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-size:1.15rem;font-weight:800;margin-bottom:18px;}
+.m-input{width:100%;padding:13px 14px;border-radius:var(--r);background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Outfit',sans-serif;font-size:0.95rem;outline:none;margin-bottom:12px;}
+.m-input:focus{border-color:var(--accent);}
+.color-grid{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px;}
+.col-opt{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border-color 0.12s,transform 0.1s;}
+.col-opt.sel{border-color:#fff;transform:scale(1.1);}
+.m-confirm{width:100%;padding:13px;border-radius:var(--r);background:var(--accent);border:none;color:#fff;font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;}
+.m-cancel{width:100%;padding:11px;border-radius:var(--r);background:transparent;border:1px solid var(--border);color:var(--text2);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;margin-top:8px;}
 
-  /* ── EDIT VIEW ── */
-  .edit-section-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; }
-  .tile-edit-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-  .tile-edit-row {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 14px 16px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .color-dot {
-    width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
-  }
-  .tile-edit-name {
-    flex: 1; background: transparent; border: none; color: var(--text);
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 600; outline: none;
-    min-width: 0;
-  }
-  .tile-edit-name:focus { border-bottom: 1px solid var(--accent); }
-  .color-picker { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; overflow: hidden; padding: 0; background: none; }
-  .delete-tile-btn {
-    background: transparent; border: none; color: var(--text2);
-    font-size: 1.2rem; cursor: pointer; padding: 4px; transition: color 0.2s;
-  }
-  .delete-tile-btn:hover { color: var(--danger); }
-  .add-new-btn {
-    width: 100%; padding: 14px; border-radius: 12px;
-    background: var(--accent); border: none; color: #fff;
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
-    cursor: pointer; transition: filter 0.2s;
-  }
-  .add-new-btn:hover { filter: brightness(1.1); }
-  .save-btn {
-    width: 100%; padding: 14px; border-radius: 12px;
-    background: var(--accent3); border: none; color: #0f0f14;
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
-    cursor: pointer; margin-top: 12px; transition: filter 0.2s;
-  }
-  .save-btn:hover { filter: brightness(0.9); }
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:9px 18px;border-radius:30px;font-size:0.82rem;font-weight:700;z-index:300;transition:transform 0.28s ease;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-    z-index: 200; align-items: flex-end; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface); border-radius: 20px 20px 0 0;
-    padding: 28px 24px 40px; width: 100%; max-width: 480px;
-    border: 1px solid var(--border);
-    animation: slideUp 0.25s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 20px; }
-  .modal-input {
-    width: 100%; padding: 14px 16px; border-radius: 12px;
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); font-family: 'Syne', sans-serif; font-size: 1rem;
-    outline: none; margin-bottom: 16px;
-  }
-  .modal-input:focus { border-color: var(--accent); }
-  .modal-colors { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-  .modal-color-opt {
-    width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-    border: 3px solid transparent; transition: border-color 0.15s;
-  }
-  .modal-color-opt.selected { border-color: #fff; }
-  .modal-confirm {
-    width: 100%; padding: 14px; border-radius: 12px;
-    background: var(--accent); border: none; color: #fff;
-    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
-    cursor: pointer;
-  }
-  .modal-cancel {
-    width: 100%; padding: 12px; border-radius: 12px;
-    background: transparent; border: 1px solid var(--border); color: var(--text2);
-    font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 600;
-    cursor: pointer; margin-top: 8px;
-  }
+/* CONFETTI */
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+.cp{position:fixed;width:8px;height:8px;border-radius:2px;animation:confettiFall 1.2s ease-in forwards;pointer-events:none;z-index:999;}
 
-  /* ── EMPTY STATE ── */
-  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
-  .empty-icon { font-size: 3rem; margin-bottom: 16px; }
-  .empty-title { font-size: 1.2rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
-  .empty-sub { font-size: 0.9rem; }
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--text2);grid-column:1/-1;}
+.empty-icon{font-size:2.8rem;margin-bottom:14px;}
+.empty-title{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:6px;}
 
-  /* Toast */
-  .toast {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); padding: 10px 20px; border-radius: 30px;
-    font-size: 0.85rem; font-weight: 600; z-index: 300;
-    transition: transform 0.3s ease; pointer-events: none;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="nav-logo">Tally<span>Up</span></div>
+  <div class="logo">Tally<em>Up</em></div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showView('counters')">Tiles</button>
-    <button class="nav-tab" onclick="showView('dashboard')">Stats</button>
+    <button class="tab active" onclick="show('counters')">Tiles</button>
+    <button class="tab" onclick="show('dashboard')">Stats</button>
+    <button class="tab" onclick="show('edit')">⚙️ Edit</button>
   </div>
-  <button class="nav-edit-btn" onclick="showView('edit')">✏️ Edit</button>
+  <button class="add-nav-btn" onclick="openAdd()">＋ Add</button>
 </nav>
 
-<!-- COUNTERS VIEW -->
-<div class="view active" id="view-counters">
-  <div class="counter-grid" id="counter-grid"></div>
+<div class="view active" id="v-counters">
+  <div class="grid" id="grid"></div>
 </div>
 
-<!-- DASHBOARD VIEW -->
-<div class="view" id="view-dashboard">
-  <div class="dash-header">
-    <div class="dash-title">Your Stats</div>
-    <div class="dash-sub" id="dash-date"></div>
+<div class="view" id="v-dashboard">
+  <div class="dash-date" id="dash-date"></div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">All Time</div><div class="kpi-val c1" id="kpi-total">0</div></div>
+    <div class="kpi"><div class="kpi-label">Today</div><div class="kpi-val c2" id="kpi-today">0</div></div>
+    <div class="kpi"><div class="kpi-label">Best Streak</div><div class="kpi-val c4" id="kpi-streak">0🔥</div></div>
+    <div class="kpi"><div class="kpi-label">Active Tiles</div><div class="kpi-val c3" id="kpi-tiles">0</div></div>
   </div>
-  <div class="stats-cards">
-    <div class="stat-card">
-      <div class="stat-label">Total All Time</div>
-      <div class="stat-value accent" id="stat-total">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Today</div>
-      <div class="stat-value accent2" id="stat-today">0</div>
-    </div>
-  </div>
-  <div class="section-title">All Time Totals</div>
+  <div class="sec-title">All Time Rankings</div>
   <div class="bar-list" id="bar-list"></div>
-  <div class="today-section">
-    <div class="section-title">Today's Activity</div>
-    <div class="today-list" id="today-list"></div>
-  </div>
-  <div class="reset-section">
-    <button class="reset-btn" onclick="confirmReset()">🗑 Reset All Counters</button>
+  <div class="sec-title">Today's Activity</div>
+  <div class="today-list" id="today-list"></div>
+  <div style="margin-top:20px;">
+    <button class="export-btn" onclick="exportCSV()">📊 Export to CSV</button>
+    <button class="reset-btn" onclick="doReset()">🗑 Reset All Counters</button>
   </div>
 </div>
 
-<!-- EDIT VIEW -->
-<div class="view" id="view-edit">
-  <div class="edit-section-title">Manage Your Tiles</div>
-  <div class="tile-edit-list" id="tile-edit-list"></div>
-  <button class="add-new-btn" onclick="openAddModal()">+ Add New Tile</button>
+<div class="view" id="v-edit">
+  <div class="sec-title" style="margin-top:0;">Your Tiles <span style="color:var(--text3);font-size:0.7rem;">(set daily goal = 0 for no goal)</span></div>
+  <div class="edit-list" id="edit-list"></div>
+  <button class="add-btn" onclick="openAdd()">＋ Add New Tile</button>
   <button class="save-btn" onclick="saveEdit()">✓ Save Changes</button>
+
+  <div class="sec-title">Notifications & Reminders</div>
+  <div class="setting-card">
+    <div class="setting-row">
+      <div><div class="setting-label">🔔 Daily Reminders</div><div class="setting-sub">Get notified to log your tiles</div></div>
+      <button class="toggle" id="notif-toggle" onclick="toggleNotif()"></button>
+    </div>
+    <div id="time-list" class="time-list" style="display:none;"></div>
+    <button id="add-time-btn" class="add-time-btn" style="display:none;" onclick="addTime()">+ Add reminder time</button>
+  </div>
+
+  <div class="sec-title">Auto Reset</div>
+  <div class="setting-card">
+    <div class="setting-row">
+      <div><div class="setting-label">🌙 Reset Counters at Midnight</div><div class="setting-sub">Resets all counts to 0 each new day</div></div>
+      <button class="toggle" id="reset-toggle" onclick="toggleAutoReset()"></button>
+    </div>
+  </div>
 </div>
 
-<!-- ADD MODAL -->
-<div class="modal-overlay" id="modal">
+<div class="overlay" id="modal" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-title">New Tile</div>
-    <input class="modal-input" id="modal-name" placeholder="Tile name (e.g. Water, Coffee...)" maxlength="20">
-    <div class="modal-colors" id="modal-colors"></div>
-    <button class="modal-confirm" onclick="confirmAddTile()">Add Tile</button>
-    <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+    <input class="m-input" id="m-name" placeholder="Name (e.g. Water, Coffee, Steps…)" maxlength="20">
+    <input class="m-input" id="m-goal" placeholder="Daily goal — optional (e.g. 8 glasses)" type="number" min="0" max="9999">
+    <div class="color-grid" id="color-grid"></div>
+    <button class="m-confirm" onclick="confirmAdd()">Add Tile</button>
+    <button class="m-cancel" onclick="closeModal()">Cancel</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const COLORS = ['#7c6aff','#ff6a8a','#6affb4','#ffb86a','#6aaeff','#ff6af2','#fff06a','#ff8c6a'];
-const TODAY = new Date().toISOString().split('T')[0];
+const PAL=['#5b5fff','#ff5b8d','#3dffa0','#ffd166','#5bf5ff','#ff875b','#d45bff','#fff75b'];
+const TD=()=>new Date().toISOString().split('T')[0];
+let S=load(),pickedColor=PAL[0];
 
-let state = load();
-let selectedModalColor = COLORS[0];
-
-function load() {
-  try {
-    const s = JSON.parse(localStorage.getItem('tallyup_v2'));
-    if (s && s.tiles) return s;
-  } catch(e) {}
-  return {
-    tiles: [
-      { id: 1, name: 'Water', color: '#6aaeff', count: 0, todayCounts: {} },
-      { id: 2, name: 'Coffee', color: '#ffb86a', count: 0, todayCounts: {} },
-      { id: 3, name: 'Exercise', color: '#6affb4', count: 0, todayCounts: {} },
-    ]
-  };
+function load(){
+  try{const d=JSON.parse(localStorage.getItem('tu4'));if(d&&d.tiles)return d;}catch(e){}
+  return{tiles:[
+    {id:1,name:'Water',color:'#5bf5ff',count:0,todayCounts:{},goal:8,streakDays:[]},
+    {id:2,name:'Coffee',color:'#ffd166',count:0,todayCounts:{},goal:3,streakDays:[]},
+    {id:3,name:'Exercise',color:'#3dffa0',count:0,todayCounts:{},goal:1,streakDays:[]},
+  ],settings:{autoReset:false,reminders:[],notifEnabled:false,lastResetDate:''}};
 }
-
-function save() {
-  localStorage.setItem('tallyup_v2', JSON.stringify(state));
-}
-
-function getTodayCount(tile) {
-  return (tile.todayCounts && tile.todayCounts[TODAY]) || 0;
-}
-
-// ── COUNTERS ──
-function renderCounters() {
-  const grid = document.getElementById('counter-grid');
-  grid.innerHTML = '';
-  if (!state.tiles.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-icon">🎯</div>
-      <div class="empty-title">No tiles yet</div>
-      <div class="empty-sub">Tap ✏️ Edit to add your first tile</div>
-    </div>`;
-    return;
+function save(){localStorage.setItem('tu4',JSON.stringify(S));}
+function tdCount(t){return(t.todayCounts&&t.todayCounts[TD()])||0;}
+function streak(t){
+  if(!t.streakDays||!t.streakDays.length)return 0;
+  const days=[...new Set(t.streakDays)].sort().reverse();
+  let s=0,d=new Date();
+  for(let i=0;i<90;i++){
+    const k=d.toISOString().split('T')[0];
+    if(days.includes(k)){s++;d.setDate(d.getDate()-1);}else break;
   }
-  state.tiles.forEach(tile => {
-    const div = document.createElement('div');
-    div.className = 'tile';
-    div.style.setProperty('--tile-color', tile.color);
-    div.innerHTML = `
-      <div class="tile-name">${escHtml(tile.name)}</div>
-      <div class="tile-count" id="count-${tile.id}">${tile.count}</div>
-      <div class="tile-btn-row">
-        <button class="tile-minus" onclick="adjust(event,${tile.id},-1)">−</button>
-        <button class="tile-plus" onclick="increment(event,${tile.id})">+</button>
+  return s;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* TILES */
+function renderTiles(){
+  const g=document.getElementById('grid');g.innerHTML='';
+  if(!S.tiles.length){
+    g.innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">No tiles yet</div><div>Tap + Add to get started</div></div>`;return;
+  }
+  S.tiles.forEach(t=>{
+    const tc=tdCount(t),str=streak(t),hasGoal=t.goal>0;
+    const pct=hasGoal?Math.min(100,Math.round(tc/t.goal*100)):0;
+    const div=document.createElement('div');
+    div.className='tile';div.style.setProperty('--tc',t.color);
+    div.innerHTML=`
+      <div class="tile-name">${esc(t.name)}</div>
+      <div class="tile-count" id="cnt-${t.id}">${t.count}</div>
+      <div class="tile-row">
+        <button class="btn-minus" onclick="adj(event,${t.id},-1)">−</button>
+        <button class="btn-plus" onclick="inc(event,${t.id})">＋</button>
       </div>
-      <div class="tile-today" id="today-${tile.id}">Today: ${getTodayCount(tile)}</div>
+      <div class="tile-meta">
+        <div class="tile-today" id="td-${t.id}">Today: ${tc}</div>
+        <div class="streak-badge${str>1?' show':''}" id="str-${t.id}">${str}🔥</div>
+      </div>
+      <div class="goal-wrap${hasGoal?' show':''}" id="gw-${t.id}">
+        <div class="goal-track"><div class="goal-fill" id="gf-${t.id}" style="width:${pct}%"></div></div>
+        <div class="goal-lbl" id="gl-${t.id}">${hasGoal?(tc>=t.goal?'✅ Done!':tc+' / '+t.goal):''}</div>
+      </div>
     `;
-    grid.appendChild(div);
+    g.appendChild(div);
   });
 }
 
-function increment(e, id) {
+function inc(e,id){
   e.stopPropagation();
-  const tile = state.tiles.find(t => t.id === id);
-  if (!tile) return;
-  tile.count++;
-  tile.todayCounts = tile.todayCounts || {};
-  tile.todayCounts[TODAY] = (tile.todayCounts[TODAY] || 0) + 1;
+  const t=S.tiles.find(x=>x.id===id);if(!t)return;
+  t.count++;t.todayCounts=t.todayCounts||{};
+  t.todayCounts[TD()]=(t.todayCounts[TD()]||0)+1;
+  t.streakDays=t.streakDays||[];
+  if(!t.streakDays.includes(TD()))t.streakDays.push(TD());
   save();
-  const countEl = document.getElementById('count-' + id);
-  const todayEl = document.getElementById('today-' + id);
-  if (countEl) { countEl.textContent = tile.count; countEl.style.transform = 'scale(1.3)'; setTimeout(() => countEl.style.transform = '', 120); }
-  if (todayEl) todayEl.textContent = 'Today: ' + getTodayCount(tile);
-  // Ripple
-  const r = document.createElement('div');
-  r.className = 'ripple';
-  const btn = e.currentTarget;
-  const rect = btn.getBoundingClientRect();
-  r.style.left = (e.clientX - rect.left - 30) + 'px';
-  r.style.top = (e.clientY - rect.top - 30) + 'px';
-  btn.appendChild(r);
-  setTimeout(() => r.remove(), 400);
-}
-
-function adjust(e, id, delta) {
-  e.stopPropagation();
-  const tile = state.tiles.find(t => t.id === id);
-  if (!tile) return;
-  tile.count = Math.max(0, tile.count + delta);
-  if (delta < 0 && tile.todayCounts && tile.todayCounts[TODAY] > 0) {
-    tile.todayCounts[TODAY] = Math.max(0, tile.todayCounts[TODAY] + delta);
+  const cel=document.getElementById('cnt-'+id);
+  if(cel){cel.textContent=t.count;cel.classList.add('bump');setTimeout(()=>cel.classList.remove('bump'),150);}
+  document.getElementById('td-'+id).textContent='Today: '+tdCount(t);
+  const s=streak(t),sel=document.getElementById('str-'+id);
+  if(sel){sel.textContent=s+'🔥';sel.classList.toggle('show',s>1);}
+  const tc=tdCount(t),hasGoal=t.goal>0;
+  if(hasGoal){
+    const pct=Math.min(100,Math.round(tc/t.goal*100));
+    const gf=document.getElementById('gf-'+id),gl=document.getElementById('gl-'+id);
+    if(gf)gf.style.width=pct+'%';
+    if(gl)gl.textContent=tc>=t.goal?'✅ Done!':tc+' / '+t.goal;
+    if(tc===t.goal)celebrate();
   }
-  save();
-  const countEl = document.getElementById('count-' + id);
-  const todayEl = document.getElementById('today-' + id);
-  if (countEl) countEl.textContent = tile.count;
-  if (todayEl) todayEl.textContent = 'Today: ' + getTodayCount(tile);
+  // ripple
+  const r=document.createElement('div');
+  r.style.cssText=`position:absolute;border-radius:50%;background:${t.color};opacity:0.25;width:50px;height:50px;transform:scale(0);animation:rp 0.4s linear;pointer-events:none;left:50%;top:50%;margin:-25px 0 0 -25px;`;
+  if(!document.getElementById('rp-style')){const s=document.createElement('style');s.id='rp-style';s.textContent='@keyframes rp{to{transform:scale(5);opacity:0;}}';document.head.appendChild(s);}
+  e.currentTarget.style.position='relative';e.currentTarget.style.overflow='hidden';
+  e.currentTarget.appendChild(r);setTimeout(()=>r.remove(),400);
 }
 
-// ── DASHBOARD ──
-function renderDashboard() {
-  const now = new Date();
-  document.getElementById('dash-date').textContent = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  const total = state.tiles.reduce((s, t) => s + t.count, 0);
-  const todayTotal = state.tiles.reduce((s, t) => s + getTodayCount(t), 0);
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-today').textContent = todayTotal;
+function adj(e,id,d){
+  e.stopPropagation();
+  const t=S.tiles.find(x=>x.id===id);if(!t)return;
+  t.count=Math.max(0,t.count+d);
+  if(d<0&&t.todayCounts&&t.todayCounts[TD()]>0)t.todayCounts[TD()]=Math.max(0,(t.todayCounts[TD()]||0)+d);
+  save();
+  document.getElementById('cnt-'+id).textContent=t.count;
+  document.getElementById('td-'+id).textContent='Today: '+tdCount(t);
+}
 
-  const maxCount = Math.max(1, ...state.tiles.map(t => t.count));
-  const barList = document.getElementById('bar-list');
-  barList.innerHTML = '';
-  [...state.tiles].sort((a, b) => b.count - a.count).forEach(tile => {
-    const pct = Math.round((tile.count / maxCount) * 100);
-    barList.innerHTML += `
-      <div class="bar-item">
-        <div class="bar-top">
-          <div class="bar-name">${escHtml(tile.name)}</div>
-          <div class="bar-count">${tile.count}</div>
-        </div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${tile.color}"></div></div>
-      </div>`;
+function celebrate(){
+  const cols=['#5b5fff','#ff5b8d','#3dffa0','#ffd166','#5bf5ff'];
+  for(let i=0;i<20;i++){
+    const c=document.createElement('div');c.className='cp';
+    c.style.cssText=`left:${Math.random()*100}vw;top:-10px;background:${cols[i%cols.length]};animation-delay:${Math.random()*0.4}s;animation-duration:${0.9+Math.random()*0.6}s;`;
+    document.body.appendChild(c);setTimeout(()=>c.remove(),1600);
+  }
+  toast('🎉 Goal reached!');
+}
+
+/* DASHBOARD */
+function renderDash(){
+  const now=new Date();
+  document.getElementById('dash-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('kpi-total').textContent=S.tiles.reduce((s,t)=>s+t.count,0);
+  document.getElementById('kpi-today').textContent=S.tiles.reduce((s,t)=>s+tdCount(t),0);
+  document.getElementById('kpi-streak').textContent=Math.max(0,...S.tiles.map(t=>streak(t)))+'🔥';
+  document.getElementById('kpi-tiles').textContent=S.tiles.length;
+  const maxC=Math.max(1,...S.tiles.map(t=>t.count));
+  const bl=document.getElementById('bar-list');bl.innerHTML='';
+  [...S.tiles].sort((a,b)=>b.count-a.count).forEach(t=>{
+    const pct=Math.round(t.count/maxC*100),s=streak(t);
+    bl.innerHTML+=`<div class="bar-item">
+      <div class="bar-top"><div class="bar-name">${esc(t.name)}</div><div class="bar-num">${t.count}${t.goal>0?' / goal '+t.goal:''}</div></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${t.color}"></div></div>
+      ${s>1?`<div class="bar-streak">${s} day streak 🔥</div>`:''}
+    </div>`;
   });
+  const tl=document.getElementById('today-list');tl.innerHTML='';
+  const active=S.tiles.filter(t=>tdCount(t)>0);
+  if(!active.length){tl.innerHTML='<div style="color:var(--text3);text-align:center;padding:18px 0;font-size:0.88rem">No taps today yet 🎯</div>';}
+  else[...active].sort((a,b)=>tdCount(b)-tdCount(a)).forEach(t=>{
+    tl.innerHTML+=`<div class="today-row"><div class="today-name">${esc(t.name)}</div><div class="today-pill" style="color:${t.color}">${tdCount(t)} today${t.goal>0?' / '+t.goal:''}</div></div>`;
+  });
+}
 
-  const todayList = document.getElementById('today-list');
-  todayList.innerHTML = '';
-  const active = state.tiles.filter(t => getTodayCount(t) > 0);
-  if (!active.length) {
-    todayList.innerHTML = `<div style="color:var(--text2);text-align:center;padding:20px 0;font-size:0.9rem">No activity today yet — get tapping! 🎯</div>`;
-  } else {
-    active.sort((a,b) => getTodayCount(b) - getTodayCount(a)).forEach(tile => {
-      todayList.innerHTML += `
-        <div class="today-row">
-          <div class="today-name">${escHtml(tile.name)}</div>
-          <div class="today-badge" style="color:${tile.color}">${getTodayCount(tile)} today</div>
-        </div>`;
+/* EXPORT */
+function exportCSV(){
+  let csv='Tile,Total All Time,Today,Current Streak,Daily Goal\n';
+  S.tiles.forEach(t=>{csv+=`"${t.name}",${t.count},${tdCount(t)},${streak(t)},${t.goal||'—'}\n`;});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='tallyup-'+TD()+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+  toast('CSV exported! 📊');
+}
+
+/* RESET */
+function doReset(){
+  if(confirm('Reset ALL counters to 0? Streaks will be lost too.')){
+    S.tiles.forEach(t=>{t.count=0;t.todayCounts={};t.streakDays=[];});
+    save();renderTiles();renderDash();toast('All counters reset');
+  }
+}
+
+/* EDIT */
+function renderEdit(){
+  const el=document.getElementById('edit-list');el.innerHTML='';
+  S.tiles.forEach(t=>{
+    const row=document.createElement('div');row.className='edit-row';
+    row.innerHTML=`
+      <div class="edit-dot" style="background:${t.color}"></div>
+      <input class="edit-input" data-id="${t.id}" value="${esc(t.name)}" maxlength="20" placeholder="Tile name">
+      <input class="goal-input" data-goal="${t.id}" value="${t.goal||''}" placeholder="Goal" type="number" min="0" max="9999">
+      <button class="del-btn" onclick="delTile(${t.id})">🗑</button>
+    `;
+    el.appendChild(row);
+  });
+  const ns=S.settings||{};
+  document.getElementById('notif-toggle').className='toggle'+(ns.notifEnabled?' on':'');
+  document.getElementById('reset-toggle').className='toggle'+(ns.autoReset?' on':'');
+  renderTimes();
+}
+
+function delTile(id){
+  if(S.tiles.length<=1){toast('Keep at least 1 tile');return;}
+  if(confirm('Delete this tile? Its data will be lost.')){S.tiles=S.tiles.filter(t=>t.id!==id);save();renderEdit();toast('Tile deleted');}
+}
+
+function saveEdit(){
+  document.querySelectorAll('.edit-input').forEach(inp=>{
+    const t=S.tiles.find(x=>x.id===parseInt(inp.dataset.id));
+    if(t&&inp.value.trim())t.name=inp.value.trim();
+  });
+  document.querySelectorAll('.goal-input').forEach(inp=>{
+    const t=S.tiles.find(x=>x.id===parseInt(inp.dataset.goal));
+    if(t)t.goal=parseInt(inp.value)||0;
+  });
+  save();renderTiles();toast('Saved ✓');show('counters');
+}
+
+/* NOTIFICATIONS */
+function toggleNotif(){
+  const ns=S.settings=S.settings||{};
+  if(!ns.notifEnabled){
+    if(!('Notification' in window)){toast('Notifications not supported in this browser');return;}
+    Notification.requestPermission().then(p=>{
+      if(p==='granted'){ns.notifEnabled=true;if(!ns.reminders||!ns.reminders.length)ns.reminders=['08:00'];save();renderEdit();scheduleAll();toast('Reminders on 🔔');}
+      else toast('Please allow notifications in browser settings');
     });
-  }
+  }else{ns.notifEnabled=false;save();renderEdit();toast('Reminders off');}
 }
 
-function confirmReset() {
-  if (confirm('Reset ALL counters to 0? This cannot be undone.')) {
-    state.tiles.forEach(t => { t.count = 0; t.todayCounts = {}; });
-    save();
-    renderCounters();
-    renderDashboard();
-    toast('All counters reset');
-  }
+function renderTimes(){
+  const ns=S.settings||{},show=ns.notifEnabled;
+  const tl=document.getElementById('time-list'),ab=document.getElementById('add-time-btn');
+  tl.style.display=show?'flex':'none';ab.style.display=show?'block':'none';
+  tl.innerHTML='';
+  if(!show)return;
+  (ns.reminders||[]).forEach((v,i)=>{
+    const row=document.createElement('div');row.className='time-row';
+    row.innerHTML=`<input type="time" class="time-input" value="${v}" onchange="updateTime(${i},this.value)"><button class="remove-time" onclick="removeTime(${i})">✕</button>`;
+    tl.appendChild(row);
+  });
 }
+function addTime(){const ns=S.settings=S.settings||{};ns.reminders=ns.reminders||[];ns.reminders.push('09:00');save();renderTimes();scheduleAll();}
+function updateTime(i,v){S.settings.reminders[i]=v;save();scheduleAll();}
+function removeTime(i){S.settings.reminders.splice(i,1);save();renderTimes();scheduleAll();}
 
-// ── EDIT ──
-function renderEdit() {
-  const list = document.getElementById('tile-edit-list');
-  list.innerHTML = '';
-  state.tiles.forEach((tile, i) => {
-    const row = document.createElement('div');
-    row.className = 'tile-edit-row';
-    row.innerHTML = `
-      <div class="color-dot" style="background:${tile.color}"></div>
-      <input class="tile-edit-name" value="${escHtml(tile.name)}" data-id="${tile.id}" maxlength="20" placeholder="Tile name">
-      <button class="delete-tile-btn" onclick="deleteTile(${tile.id})">🗑</button>
-    `;
-    list.appendChild(row);
+function scheduleAll(){
+  const ns=S.settings;
+  if(!ns||!ns.notifEnabled||!ns.reminders||Notification.permission!=='granted')return;
+  ns.reminders.forEach(ts=>{
+    const[h,m]=ts.split(':').map(Number),now=new Date(),next=new Date();
+    next.setHours(h,m,0,0);if(next<=now)next.setDate(next.getDate()+1);
+    setTimeout(()=>{
+      if(Notification.permission==='granted')
+        new Notification('TallyUp 🎯',{body:"Time to log your tiles!",icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎯</text></svg>'});
+    },next-now);
   });
 }
 
-function deleteTile(id) {
-  if (state.tiles.length <= 1) { toast('Keep at least 1 tile'); return; }
-  if (confirm('Delete this tile? Its count will be lost.')) {
-    state.tiles = state.tiles.filter(t => t.id !== id);
-    save(); renderEdit(); toast('Tile deleted');
-  }
+/* AUTO RESET */
+function toggleAutoReset(){const ns=S.settings=S.settings||{};ns.autoReset=!ns.autoReset;save();renderEdit();toast(ns.autoReset?'Auto-reset ON 🌙':'Auto-reset OFF');}
+function checkAutoReset(){
+  const ns=S.settings||{};if(!ns.autoReset)return;
+  if(ns.lastResetDate!==TD()){S.tiles.forEach(t=>{t.todayCounts={};});ns.lastResetDate=TD();save();}
 }
 
-function saveEdit() {
-  const inputs = document.querySelectorAll('.tile-edit-name');
-  inputs.forEach(inp => {
-    const id = parseInt(inp.dataset.id);
-    const tile = state.tiles.find(t => t.id === id);
-    if (tile && inp.value.trim()) tile.name = inp.value.trim();
-  });
-  save();
-  renderCounters();
-  toast('Changes saved ✓');
-  showView('counters');
-}
-
-// ── MODAL ──
-function openAddModal() {
-  document.getElementById('modal-name').value = '';
-  selectedModalColor = COLORS[0];
-  const colorWrap = document.getElementById('modal-colors');
-  colorWrap.innerHTML = '';
-  COLORS.forEach((c, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'modal-color-opt' + (i === 0 ? ' selected' : '');
-    btn.style.background = c;
-    btn.onclick = () => {
-      selectedModalColor = c;
-      document.querySelectorAll('.modal-color-opt').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-    };
-    colorWrap.appendChild(btn);
+/* ADD MODAL */
+function openAdd(){
+  document.getElementById('m-name').value='';document.getElementById('m-goal').value='';
+  pickedColor=PAL[0];
+  const cg=document.getElementById('color-grid');cg.innerHTML='';
+  PAL.forEach((c,i)=>{
+    const b=document.createElement('button');b.className='col-opt'+(i===0?' sel':'');b.style.background=c;
+    b.onclick=()=>{pickedColor=c;document.querySelectorAll('.col-opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};
+    cg.appendChild(b);
   });
   document.getElementById('modal').classList.add('open');
-  setTimeout(() => document.getElementById('modal-name').focus(), 300);
+  setTimeout(()=>document.getElementById('m-name').focus(),250);
 }
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
-function confirmAddTile() {
-  const name = document.getElementById('modal-name').value.trim();
-  if (!name) { toast('Please enter a name'); return; }
-  const newId = Date.now();
-  state.tiles.push({ id: newId, name, color: selectedModalColor, count: 0, todayCounts: {} });
-  save();
-  closeModal();
-  renderEdit();
-  toast('Tile added ✓');
+function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');}
+function confirmAdd(){
+  const name=document.getElementById('m-name').value.trim();
+  if(!name){toast('Please enter a name');return;}
+  S.tiles.push({id:Date.now(),name,color:pickedColor,count:0,todayCounts:{},goal:parseInt(document.getElementById('m-goal').value)||0,streakDays:[]});
+  save();closeModal();renderTiles();renderEdit();toast('Tile added ✓');
 }
 
-// ── VIEWS ──
-function showView(name) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t => {
-    if (t.textContent.toLowerCase().includes(name === 'counters' ? 'tile' : name)) t.classList.add('active');
+/* VIEWS */
+function show(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('v-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>{
+    const map={counters:'Tiles',dashboard:'Stats',edit:'⚙️ Edit'};
+    t.classList.toggle('active',t.textContent===map[name]);
   });
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'edit') renderEdit();
-  if (name === 'counters') renderCounters();
+  if(name==='dashboard')renderDash();
+  if(name==='edit')renderEdit();
+  if(name==='counters')renderTiles();
 }
 
-// ── TOAST ──
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+/* TOAST */
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);
 }
 
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── INIT ──
-renderCounters();
-document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+/* INIT */
+checkAutoReset();
+renderTiles();
+if(S.settings&&S.settings.notifEnabled&&typeof Notification!=='undefined'&&Notification.permission==='granted')scheduleAll();
 </script>
 </body>
 </html>
