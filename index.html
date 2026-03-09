@@ -8,7 +8,31 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TallyUp">
+<meta name="description" content="TallyUp — your personal tally counter app">
 <title>TallyUp</title>
+<script>
+// Inline Web Manifest — injected dynamically so no separate file needed
+const manifest = {
+  name: "TallyUp",
+  short_name: "TallyUp",
+  description: "Your personal tally counter & habit tracker",
+  start_url: "./",
+  display: "standalone",
+  background_color: "#0a0a0f",
+  theme_color: "#0a0a0f",
+  orientation: "portrait",
+  icons: [
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230a0a0f'/><text x='50%25' y='58%25' font-size='300' text-anchor='middle' dominant-baseline='middle'>🎯</text></svg>", sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%230a0a0f'/><text x='50%25' y='58%25' font-size='120' text-anchor='middle' dominant-baseline='middle'>🎯</text></svg>", sizes: "192x192", type: "image/svg+xml" }
+  ]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+const manifestURL = URL.createObjectURL(blob);
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = manifestURL;
+document.currentScript.after(link);
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -748,6 +772,27 @@ function toast(msg){
 checkAutoReset();
 renderTiles();
 if(S.settings&&S.settings.notifEnabled&&typeof Notification!=='undefined'&&Notification.permission==='granted')scheduleAll();
+
+/* SERVICE WORKER — makes app installable & works offline */
+if('serviceWorker' in navigator){
+  const swCode = `
+    const CACHE = 'tallyup-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(()=>new Response('Offline'))));
+    });
+  `;
+  const swBlob = new Blob([swCode], {type: 'application/javascript'});
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL, {scope: '/'}).catch(()=>{});
+}
 </script>
 </body>
 </html>
